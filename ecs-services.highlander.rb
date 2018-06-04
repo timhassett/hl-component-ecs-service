@@ -2,6 +2,8 @@ HighlanderComponent do
 
   DependsOn 'vpc@1.0.4'
 
+  Description "ecs-service - #{name} - #{version}"
+
   Parameters do
     StackParam 'EnvironmentName', 'dev', isGlobal: true
     StackParam 'EnvironmentType', 'development', isGlobal: true
