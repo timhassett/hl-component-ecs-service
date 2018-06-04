@@ -1,0 +1,16 @@
+log_retention: 7
+
+cpu: 1024
+memory: 256
+
+task_definition:
+  nginx:
+    image: nginx
+    ports:
+      - 80
+
+
+targetgroup:
+  name: DefaultHTTP
+  container: nginx
+  port: 80
