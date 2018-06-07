@@ -206,7 +206,7 @@ CloudFormation do
   end
 
   awsvpc_enabled = false
-  if defined? network_mode && network_mode == 'awsvpc'
+  if defined?(network_mode) && network_mode == 'awsvpc'
     awsvpc_enabled = true
   end
 
