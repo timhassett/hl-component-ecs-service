@@ -1,14 +1,17 @@
+component_version: 1
+
+maximum_availability_zones: 5
 log_retention: 7
 
-cpu: 1024
-memory: 256
+# network_mode: awsvpc
 
 task_definition:
   nginx:
     image: nginx
+    cpu: 1024
+    memory: 256
     ports:
       - 80
-
 
 targetgroup:
   name: DefaultHTTP

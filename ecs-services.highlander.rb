@@ -7,12 +7,14 @@ HighlanderComponent do
   Parameters do
     StackParam 'EnvironmentName', 'dev', isGlobal: true
     StackParam 'EnvironmentType', 'development', isGlobal: true
-    StackParam 'Tag', 'latest'
     
     OutputParam component: 'vpc', name: "VPCId"
+    OutputParam component: 'vpc', name: "SecurityGroupBackplane"
     OutputParam component: 'loadbalancer', name: 'LoadBalancer'
     OutputParam component: 'ecs', name: 'EcsCluster'
     OutputParam component: 'loadbalancer', name: "#{targetgroup['name']}TargetGroup"
+
+    subnet_parameters({'private'=>{'name'=>'Compute'}}, maximum_availability_zones)
 
     #create component params for service image tag parameters
     task_definition.each do |task_def, task|

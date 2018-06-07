@@ -205,6 +205,28 @@ CloudFormation do
     ]))
   end
 
+  awsvpc_enabled = false
+  if defined? network_mode && network_mode == 'awsvpc'
+    awsvpc_enabled = true
+  end
+
+  has_security_group = false
+  if ((defined? securityGroups) && (securityGroups.has_key?(component_name)))
+    has_security_group = true
+  end
+    
+  if awsvpc_enabled == true
+    sg_name = 'SecurityGroupBackplane'
+    if has_security_group == true
+      EC2_SecurityGroup('ServiceSecurityGroup') do
+        VpcId Ref('VPC')
+        GroupDescription "#{component_name} ECS service"
+        SecurityGroupIngress sg_create_rules(securityGroups[component_name], ip_blocks)
+      end
+      sg_name = 'ServiceSecurityGroup'
+    end
+  end
+
   ECS_Service('Service') do
     Cluster Ref("EcsCluster")
     DesiredCount 1
@@ -217,6 +239,16 @@ CloudFormation do
     if service_loadbalancer.any?
       Role Ref('Role')
       LoadBalancers service_loadbalancer
+    end
+
+    if awsvpc_enabled == true
+      NetworkConfiguration({
+        AwsvpcConfiguration: {
+          AssignPublicIp: "DISABLED",
+          SecurityGroups: [ Ref(sg_name) ],
+          Subnets: az_conditional_resources('SubnetCompute', maximum_availability_zones)
+        }        
+      })
     end
   end
 
