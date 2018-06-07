@@ -5,15 +5,15 @@ log_retention: 7
 
 # network_mode: awsvpc
 
-task_definition:
-  nginx:
-    image: nginx
-    cpu: 1024
-    memory: 256
-    ports:
-      - 80
+# task_definition:
+#   nginx:
+#     image: nginx
+#     cpu: 1024
+#     memory: 256
+#     ports:
+#       - 80
 
-targetgroup:
-  name: DefaultHTTP
-  container: nginx
-  port: 80
+# targetgroup:
+#   name: default
+#   container: nginx
+#   port: 80

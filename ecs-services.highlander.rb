@@ -12,7 +12,7 @@ HighlanderComponent do
     OutputParam component: 'vpc', name: "SecurityGroupBackplane"
     OutputParam component: 'loadbalancer', name: 'LoadBalancer'
     OutputParam component: 'ecs', name: 'EcsCluster'
-    OutputParam component: 'loadbalancer', name: "#{targetgroup['name']}TargetGroup"
+    OutputParam component: 'loadbalancer', name: "#{targetgroup['name']}TargetGroup" if defined? targetgroup
 
     subnet_parameters({'private'=>{'name'=>'Compute'}}, maximum_availability_zones)
 
@@ -22,7 +22,7 @@ HighlanderComponent do
         default_value = task.has_key?('tag_param_default') ? task['tag_param_default'] : 'latest'
         StackParam task['tag_param'], default_value
       end
-    end
+    end if defined? task_definition
 
   end
   

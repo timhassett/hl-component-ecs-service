@@ -95,7 +95,7 @@ CloudFormation do
 
     definitions << task_def
 
-  end
+  end if defined? task_definition
 
   # add docker volumes
   if defined?(volumes)
@@ -180,10 +180,10 @@ CloudFormation do
       Property('ExecutionRoleArn', Ref('ExecutionRole'))
     end
 
-  end
+  end if defined? task_definition
 
   service_loadbalancer = []
-  if targetgroup
+  if defined?(targetgroup)
     service_loadbalancer << {
       ContainerName: targetgroup['container'],
       ContainerPort: targetgroup['port'],
@@ -250,6 +250,6 @@ CloudFormation do
         }        
       })
     end
-  end
+  end if defined? task_definition
 
 end
