@@ -5,8 +5,8 @@ HighlanderComponent do
   Description "ecs-service - #{component_name} - #{component_version}"
 
   Parameters do
-    StackParam 'EnvironmentName', 'dev', isGlobal: true
-    StackParam 'EnvironmentType', 'development', isGlobal: true
+    ComponentParam 'EnvironmentName', 'dev', isGlobal: true
+    ComponentParam 'EnvironmentType', 'development', isGlobal: true
     
     OutputParam component: 'vpc', name: "VPCId"
     OutputParam component: 'vpc', name: "SecurityGroupBackplane"
@@ -20,7 +20,7 @@ HighlanderComponent do
     task_definition.each do |task_def, task|
       if task.has_key?('tag_param')
         default_value = task.has_key?('tag_param_default') ? task['tag_param_default'] : 'latest'
-        StackParam task['tag_param'], default_value
+        ComponentParam task['tag_param'], default_value
       end
     end if defined? task_definition
 
