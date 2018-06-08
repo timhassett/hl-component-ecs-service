@@ -1,5 +1,7 @@
 CloudFormation do
 
+  az_conditions_resources('SubnetCompute', maximum_availability_zones)
+
   log_retention = 7 unless defined?(log_retention)
   Resource('LogGroup') {
     Type 'AWS::Logs::LogGroup'
