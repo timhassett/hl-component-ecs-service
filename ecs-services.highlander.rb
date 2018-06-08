@@ -1,4 +1,4 @@
-HighlanderComponent do
+CfhighlanderTemplate do
 
   DependsOn 'vpc@1.0.4'
 
@@ -6,15 +6,17 @@ HighlanderComponent do
 
   Parameters do
     ComponentParam 'EnvironmentName', 'dev', isGlobal: true
-    ComponentParam 'EnvironmentType', 'development', isGlobal: true
+    ComponentParam 'EnvironmentType', 'development', allowedValues: ['development','production'], isGlobal: true
     
-    OutputParam component: 'vpc', name: "VPCId"
-    OutputParam component: 'vpc', name: "SecurityGroupBackplane"
-    OutputParam component: 'loadbalancer', name: 'LoadBalancer'
-    OutputParam component: 'ecs', name: 'EcsCluster'
-    OutputParam component: 'loadbalancer', name: "#{targetgroup['name']}TargetGroup" if defined? targetgroup
+    ComponentParam 'VPCId'
+    ComponentParam 'SecurityGroupBackplane'
+    ComponentParam 'LoadBalancer'
+    ComponentParam 'EcsCluster'
+    ComponentParam 'TargetGroup'
 
-    subnet_parameters({'private'=>{'name'=>'Compute'}}, maximum_availability_zones)
+    maximum_availability_zones.times do |az|
+      ComponentParam "SubnetCompute#{az}"
+    end
 
     #create component params for service image tag parameters
     task_definition.each do |task_def, task|

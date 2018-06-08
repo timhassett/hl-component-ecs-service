@@ -187,7 +187,7 @@ CloudFormation do
     service_loadbalancer << {
       ContainerName: targetgroup['container'],
       ContainerPort: targetgroup['port'],
-      TargetGroupArn: Ref("#{targetgroup['name']}TargetGroup")
+      TargetGroupArn: Ref('TargetGroup')
     }
   end
 
