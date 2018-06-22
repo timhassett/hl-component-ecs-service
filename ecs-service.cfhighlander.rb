@@ -1,6 +1,6 @@
 CfhighlanderTemplate do
 
-  DependsOn 'vpc'
+  DependsOn 'vpc@1.2.0'
 
   Description "ecs-service - #{component_name} - #{component_version}"
 
