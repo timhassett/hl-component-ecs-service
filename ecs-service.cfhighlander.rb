@@ -1,6 +1,6 @@
 CfhighlanderTemplate do
 
-  DependsOn 'vpc@1.0.4'
+  DependsOn 'vpc@1.2.0'
 
   Description "ecs-service - #{component_name} - #{component_version}"
 
@@ -8,8 +8,8 @@ CfhighlanderTemplate do
     ComponentParam 'EnvironmentName', 'dev', isGlobal: true
     ComponentParam 'EnvironmentType', 'development', allowedValues: ['development','production'], isGlobal: true
     
-    ComponentParam 'VPCId'
-    ComponentParam 'SecurityGroupBackplane'
+    ComponentParam 'VPCId', type: 'AWS::EC2::VPC::Id'
+    ComponentParam 'SecurityGroupBackplane', type: 'AWS::EC2::SecurityGroup::Id'
     ComponentParam 'LoadBalancer'
     ComponentParam 'EcsCluster'
     ComponentParam 'TargetGroup'
