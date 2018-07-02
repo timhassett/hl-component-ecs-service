@@ -1,6 +1,13 @@
 CloudFormation do
 
-  az_conditions_resources('SubnetCompute', maximum_availability_zones)
+  awsvpc_enabled = false
+  if defined?(network_mode) && network_mode == 'awsvpc'
+    awsvpc_enabled = true
+  end
+
+  if awsvpc_enabled
+    az_conditions_resources('SubnetCompute', maximum_availability_zones)
+  end
 
   log_retention = 7 unless defined?(log_retention)
   Resource('LogGroup') {
@@ -186,10 +193,79 @@ CloudFormation do
 
   service_loadbalancer = []
   if defined?(targetgroup)
+
+    if targetgroup.has_key?('rules')
+
+      atributes = []
+
+      targetgroup['atributes'].each do |key,value|
+        atributes << { Key: key, Value: value }
+      end if targetgroup.has_key?('atributes')
+
+      tags = []
+      tags << { Key: "Environment", Value: Ref("EnvironmentName") }
+      tags << { Key: "EnvironmentType", Value: Ref("EnvironmentType") }
+
+      targetgroup['tags'].each do |key,value|
+        tags << { Key: key, Value: value }
+      end if targetgroup.has_key?('tags')
+
+      ElasticLoadBalancingV2_TargetGroup('TaskTargetGroup') do
+        ## Required
+        Port targetgroup['port']
+        Protocol targetgroup['protocol'].upcase
+        VpcId Ref('VPCId')
+        ## Optional
+        if targetgroup.has_key?('healthcheck')
+          HealthCheckPort targetgroup['healthcheck']['port'] if targetgroup['healthcheck'].has_key?('port')
+          HealthCheckProtocol targetgroup['healthcheck']['protocol'] if targetgroup['healthcheck'].has_key?('port')
+          HealthCheckIntervalSeconds targetgroup['healthcheck']['interval'] if targetgroup['healthcheck'].has_key?('interval')
+          HealthCheckTimeoutSeconds targetgroup['healthcheck']['timeout'] if targetgroup['healthcheck'].has_key?('timeout')
+          HealthyThresholdCount targetgroup['healthcheck']['heathy_count'] if targetgroup['healthcheck'].has_key?('heathy_count')
+          UnhealthyThresholdCount targetgroup['healthcheck']['unheathy_count'] if targetgroup['healthcheck'].has_key?('unheathy_count')
+          HealthCheckPath targetgroup['healthcheck']['path'] if targetgroup['healthcheck'].has_key?('path')
+          Matcher ({ HttpCode: targetgroup['healthcheck']['code'] }) if targetgroup['healthcheck'].has_key?('code')
+        end
+
+        TargetType targetgroup['type'] if targetgroup.has_key?('type')
+        TargetGroupAttributes atributes if atributes.any?
+
+        Tags tags if tags.any?
+      end
+
+      listener_conditions = []
+      targetgroup['rules'].each do |rule|
+        if rule.key?("path")
+          listener_conditions << { Field: "path-pattern", Values: [ rule["path"] ] }
+        end
+        if rule.key?("host")
+          hosts = []
+          if rule["host"].include?('.')
+            hosts << rule["host"]
+          else
+            hosts << FnJoin("", [ rule["host"], ".", Ref("EnvironmentName"), ".", Ref('DnsDomain') ])
+          end
+          listener_conditions << { Field: "host-header", Values: hosts }
+        end
+
+        ElasticLoadBalancingV2_ListenerRule("#{rule['name']}TargetRule") do
+          Actions [{ Type: "forward", TargetGroupArn: Ref('TaskTargetGroup') }]
+          Conditions listener_conditions
+          ListenerArn Ref("Listener")
+          Priority targetgroup['priority'].to_i
+        end
+
+      end
+
+      targetgroup_arn = Ref('TaskTargetGroup')
+    else
+      targetgroup_arn = Ref('TargetGroup')
+    end
+
     service_loadbalancer << {
       ContainerName: targetgroup['container'],
       ContainerPort: targetgroup['port'],
-      TargetGroupArn: Ref('TargetGroup')
+      TargetGroupArn: targetgroup_arn
     }
   end
 
@@ -207,16 +283,11 @@ CloudFormation do
     ]))
   end
 
-  awsvpc_enabled = false
-  if defined?(network_mode) && network_mode == 'awsvpc'
-    awsvpc_enabled = true
-  end
-
   has_security_group = false
   if ((defined? securityGroups) && (securityGroups.has_key?(component_name)))
     has_security_group = true
   end
-    
+
   if awsvpc_enabled == true
     sg_name = 'SecurityGroupBackplane'
     if has_security_group == true
@@ -249,7 +320,7 @@ CloudFormation do
           AssignPublicIp: "DISABLED",
           SecurityGroups: [ Ref(sg_name) ],
           Subnets: az_conditional_resources('SubnetCompute', maximum_availability_zones)
-        }        
+        }
       })
     end
   end if defined? task_definition
