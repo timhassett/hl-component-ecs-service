@@ -7,17 +7,24 @@ CfhighlanderTemplate do
   Parameters do
     ComponentParam 'EnvironmentName', 'dev', isGlobal: true
     ComponentParam 'EnvironmentType', 'development', allowedValues: ['development','production'], isGlobal: true
-
-    ComponentParam 'VPCId', type: 'AWS::EC2::VPC::Id'
-    ComponentParam 'SecurityGroupBackplane'
-    ComponentParam 'LoadBalancer'
     ComponentParam 'EcsCluster'
-    ComponentParam 'TargetGroup'
-    ComponentParam 'Listener'
-    ComponentParam 'DnsDomain'
 
-    maximum_availability_zones.times do |az|
-      ComponentParam "SubnetCompute#{az}"
+    if (defined? targetgroup) || ((defined? network_mode) && (network_mode == "awsvpc"))
+      ComponentParam 'VPCId', type: 'AWS::EC2::VPC::Id'
+    end
+
+    if defined? targetgroup
+      ComponentParam 'LoadBalancer'
+      ComponentParam 'TargetGroup'
+      ComponentParam 'Listener'
+      ComponentParam 'DnsDomain'
+    end
+
+    if ((defined? network_mode) && (network_mode == "awsvpc"))
+      maximum_availability_zones.times do |az|
+        ComponentParam "SubnetCompute#{az}"
+      end
+      ComponentParam 'SecurityGroupBackplane'
     end
 
     task_definition.each do |task_def, task|

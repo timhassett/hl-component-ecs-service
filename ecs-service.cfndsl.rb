@@ -292,7 +292,7 @@ CloudFormation do
     sg_name = 'SecurityGroupBackplane'
     if has_security_group == true
       EC2_SecurityGroup('ServiceSecurityGroup') do
-        VpcId Ref('VPC')
+        VpcId Ref('VPCId')
         GroupDescription "#{component_name} ECS service"
         SecurityGroupIngress sg_create_rules(securityGroups[component_name], ip_blocks)
       end
