@@ -102,6 +102,11 @@ CloudFormation do
       task_def.merge!({PortMappings: port_mapppings})
     end
 
+    task_def.merge!({Command: task['command'] }) if task.key?('command')
+    task_def.merge!({HealthCheck: task['healthcheck'] }) if task.key?('healthcheck')
+    task_def.merge!({WorkingDirectory: task['working_dir'] }) if task.key?('working_dir')
+
+
     definitions << task_def
 
   end if defined? task_definition
