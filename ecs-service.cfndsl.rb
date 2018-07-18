@@ -238,8 +238,8 @@ CloudFormation do
         Tags tags if tags.any?
       end
 
-      listener_conditions = []
-      targetgroup['rules'].each do |rule|
+      targetgroup['rules'].each_with_index do |rule, index|
+        listener_conditions = []
         if rule.key?("path")
           listener_conditions << { Field: "path-pattern", Values: [ rule["path"] ] }
         end
@@ -253,11 +253,11 @@ CloudFormation do
           listener_conditions << { Field: "host-header", Values: hosts }
         end
 
-        ElasticLoadBalancingV2_ListenerRule("#{rule['name']}TargetRule") do
+        ElasticLoadBalancingV2_ListenerRule("TargetRule#{rule['priority']}") do
           Actions [{ Type: "forward", TargetGroupArn: Ref('TaskTargetGroup') }]
           Conditions listener_conditions
           ListenerArn Ref("Listener")
-          Priority targetgroup['priority'].to_i
+          Priority rule['priority'].to_i
         end
 
       end
