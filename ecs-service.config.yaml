@@ -6,14 +6,32 @@ log_retention: 7
 # network_mode: awsvpc
 
 # task_definition:
-#   nginx:
-#     image: nginx
-#     cpu: 1024
-#     memory: 256
+#   api:
+#     cpu: 256
+#     memory: 2048
+#     repo: some.custom.repo
+#     image: api
+#     tag_param: ApiTag
 #     ports:
-#       - 80
-#
+#       - 8080
+#     env_vars:
+#       KEY: value
+
 # targetgroup:
-#   name: default
-#   container: nginx
-#   port: 80
+#   name: api
+#   container: api
+#   port: 8080
+#   protocol: http
+#   listener: http
+#   healthcheck:
+#     path: /status
+#     code: 200
+#   rules:
+#     - path: /v2/*
+#       host: api.*
+#       priority: 10
+#     - path: /api/v1/*
+#       host: app.*
+#       priority: 20
+#   tags:
+#       Name: api
