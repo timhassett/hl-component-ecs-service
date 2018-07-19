@@ -20,7 +20,7 @@ CloudFormation do
 
   task_definition.each do |task_name, task|
 
-    env_vars, mount_pounts, ports = Array.new(3){[]}
+    env_vars, mount_points, ports = Array.new(3){[]}
 
     name = task.has_key?('name') ? task['name'] : task_name
 
@@ -81,12 +81,12 @@ CloudFormation do
     task_def.merge!({ Essential: false }) if task['not_essential']
 
     # add docker volumes
-    if (task.key?('mounts'))
+    if task.key?('mounts')
       task['mounts'].each do |mount|
-        path = (mount.key?('path') ? mount['path'] :  tasks[service]['volumes'][mount['volume']])
-        mount_pounts << { ContainerPath: path, SourceVolume: mount['volume'], ReadOnly: (mount.key?('ReadOnly') ? true : false) }
+        parts = mount.split(':')
+        mount_points << { ContainerPath: parts[0], SourceVolume: parts[1], ReadOnly: (parts[2] == 'ro' ? true : false) }
       end
-      task_def.merge!({MountPoints: mount_pounts })
+      task_def.merge!({MountPoints: mount_points })
     end
 
     # add port
@@ -106,15 +106,17 @@ CloudFormation do
     task_def.merge!({HealthCheck: task['healthcheck'] }) if task.key?('healthcheck')
     task_def.merge!({WorkingDirectory: task['working_dir'] }) if task.key?('working_dir')
 
-
     definitions << task_def
 
   end if defined? task_definition
 
   # add docker volumes
   if defined?(volumes)
-    volumes.each do |volume, path|
-      task_volumes << { Name: volume, Host: { SourcePath: path } }
+    volumes.each do |volume|
+      parts = volume.split(':')
+      object = { Name: parts[0]}
+      object.merge!({ Host: { SourcePath: parts[1] }}) if parts[1]
+      task_volumes << object
     end
   end
 
