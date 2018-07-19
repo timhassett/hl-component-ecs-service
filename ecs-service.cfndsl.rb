@@ -20,7 +20,7 @@ CloudFormation do
 
   task_definition.each do |task_name, task|
 
-    env_vars, mount_pounts, ports = Array.new(3){[]}
+    env_vars, mount_points, ports = Array.new(3){[]}
 
     name = task.has_key?('name') ? task['name'] : task_name
 
@@ -84,9 +84,9 @@ CloudFormation do
     if task.key?('mounts')
       task['mounts'].each do |mount|
         parts = mount.split(':')
-        mount_pounts << { ContainerPath: parts[0], SourceVolume: parts[1], ReadOnly: (parts[2] == 'ro' ? true : false) }
+        mount_points << { ContainerPath: parts[0], SourceVolume: parts[1], ReadOnly: (parts[2] == 'ro' ? true : false) }
       end
-      task_def.merge!({MountPoints: mount_pounts })
+      task_def.merge!({MountPoints: mount_points })
     end
 
     # add port
