@@ -5,10 +5,18 @@ log_retention: 7
 
 # network_mode: awsvpc
 
+# cpu: 256
+# memory: 256
+#
 # task_definition:
+#   data:
+#     repo: some.custom.repo
+#     image: data
+#     tag_param: DataTag
+#     not_essential: true
+#     env_vars:
+#       KEY: value
 #   api:
-#     cpu: 256
-#     memory: 2048
 #     repo: some.custom.repo
 #     image: api
 #     tag_param: ApiTag
@@ -16,7 +24,9 @@ log_retention: 7
 #       - 8080
 #     env_vars:
 #       KEY: value
-
+#     volumes_from:
+#       - data
+#
 # targetgroup:
 #   name: api
 #   container: api

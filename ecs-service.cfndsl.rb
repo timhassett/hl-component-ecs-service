@@ -106,6 +106,11 @@ CloudFormation do
     task_def.merge!({HealthCheck: task['healthcheck'] }) if task.key?('healthcheck')
     task_def.merge!({WorkingDirectory: task['working_dir'] }) if task.key?('working_dir')
 
+    if task.has_key?('volumes_from')
+      vols = []
+      task['volumes_from'].each {|container| vols << { SourceContainer: container, ReadOnly: false } }
+      task_def.merge!({VolumesFrom: vols })
+    end
 
     definitions << task_def
 
