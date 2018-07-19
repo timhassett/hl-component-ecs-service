@@ -8,6 +8,9 @@ log_retention: 7
 # cpu: 256
 # memory: 256
 #
+# volumes:
+#   - data-volume:/data
+#
 # task_definition:
 #   data:
 #     repo: some.custom.repo
@@ -24,9 +27,9 @@ log_retention: 7
 #       - 8080
 #     env_vars:
 #       KEY: value
-#     volumes_from:
-#       - data
-#
+#     mounts:
+#       - data-volume:/data:ro
+
 # targetgroup:
 #   name: api
 #   container: api
