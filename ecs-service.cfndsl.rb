@@ -9,6 +9,8 @@ CloudFormation do
     az_conditions_resources('SubnetCompute', maximum_availability_zones)
   end
 
+  Condition('IsProduction', FnEquals(Ref('EnvironmentType'), 'production'))
+
   log_retention = 7 unless defined?(log_retention)
   Resource('LogGroup') {
     Type 'AWS::Logs::LogGroup'
@@ -87,6 +89,13 @@ CloudFormation do
         mount_points << { ContainerPath: parts[0], SourceVolume: parts[1], ReadOnly: (parts[2] == 'ro' ? true : false) }
       end
       task_def.merge!({MountPoints: mount_points })
+    end
+
+    # volumes from
+    if task.key?('volumes_from')
+      task['volumes_from'].each do |source_container|
+      task_def.merge!({ VolumesFrom: [ SourceContainer: source_container ] })
+      end
     end
 
     # add port
@@ -277,17 +286,9 @@ CloudFormation do
   end
 
   IAM_Role('Role') do
-    AssumeRolePolicyDocument ({
-      Statement: [
-        Effect: 'Allow',
-        Principal: { Service: [ 'ecs.amazonaws.com' ] },
-        Action: [ 'sts:AssumeRole' ]
-      ]
-    })
+    AssumeRolePolicyDocument service_role_assume_policy('application-autoscaling')
     Path '/'
-    Policies Policies(IAMPolicies.new.create_policies([
-      'ecs-service-role'
-    ]))
+    ManagedPolicyArns ["arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceRole"]
   end
 
   has_security_group = false
@@ -307,9 +308,17 @@ CloudFormation do
     end
   end
 
+  desired_count = 1
+  if (defined? scaling_policy) && (scaling_policy.has_key?('min'))
+    desired_count = scaling_policy['min']
+  elsif defined? desired
+    desired_count = desired
+  end
+
   ECS_Service('Service') do
     Cluster Ref("EcsCluster")
-    DesiredCount 1
+    Property("HealthCheckGracePeriodSeconds", health_check_grace_period || 0)
+    DesiredCount FnIf('IsProduction', desired_count, 1)
     DeploymentConfiguration ({
         MinimumHealthyPercent: 100,
         MaximumPercent: 200
@@ -331,5 +340,100 @@ CloudFormation do
       })
     end
   end if defined? task_definition
+
+  if defined?(scaling_policy)
+
+    IAM_Role(:ServiceECSAutoScaleRole) {
+      AssumeRolePolicyDocument service_role_assume_policy('application-autoscaling')
+      Path '/'
+      Policies ([
+        PolicyName: 'ecs-scaling',
+        PolicyDocument: {
+          Statement: [
+            {
+              Effect: "Allow",
+              Action: ['cloudwatch:DescribeAlarms','cloudwatch:PutMetricAlarm','cloudwatch:DeleteAlarms'],
+              Resource: "*"
+            },
+            {
+              Effect: "Allow",
+              Action: ['ecs:UpdateService','ecs:DescribeServices'],
+              Resource: Ref('Service')
+            }
+          ]
+      }])
+    }
+
+    ApplicationAutoScaling_ScalableTarget(:ServiceScalingTarget) {
+      MaxCapacity scaling_policy['max']
+      MinCapacity scaling_policy['min']
+      ResourceId FnJoin( '', [ "service/", Ref('EcsCluster'), "/", FnGetAtt(:Service,:Name) ] )
+      RoleARN FnGetAtt(:ServiceECSAutoScaleRole,:Arn)
+      ScalableDimension "ecs:service:DesiredCount"
+      ServiceNamespace "ecs"
+    }
+
+    ApplicationAutoScaling_ScalingPolicy(:ServiceScalingUpPolicy) {
+      PolicyName FnJoin('-', [ Ref('EnvironmentName'), component_name, "scale-up-policy" ])
+      PolicyType "StepScaling"
+      ScalingTargetId Ref(:ServiceScalingTarget)
+      StepScalingPolicyConfiguration({
+        AdjustmentType: "ChangeInCapacity",
+        Cooldown: scaling_policy['up']['cooldown'] || 300,
+        MetricAggregationType: "Average",
+        StepAdjustments: [{ ScalingAdjustment: scaling_policy['up']['adjustment'].to_s, MetricIntervalLowerBound: 0 }]
+      })
+    }
+
+    ApplicationAutoScaling_ScalingPolicy(:ServiceScalingDownPolicy) {
+      PolicyName FnJoin('-', [ Ref('EnvironmentName'), component_name, "scale-down-policy" ])
+      PolicyType 'StepScaling'
+      ScalingTargetId Ref(:ServiceScalingTarget)
+      StepScalingPolicyConfiguration({
+        AdjustmentType: "ChangeInCapacity",
+        Cooldown: scaling_policy['up']['cooldown'] || 900,
+        MetricAggregationType: "Average",
+        StepAdjustments: [{ ScalingAdjustment: scaling_policy['down']['adjustment'].to_s, MetricIntervalLowerBound: 0 }]
+      })
+    }
+
+    default_alarm = {}
+    default_alarm['metric_name'] = 'CPUUtilization'
+    default_alarm['namespace'] = 'AWS/ECS'
+    default_alarm['statistic'] = 'Average'
+    default_alarm['period'] = '60'
+    default_alarm['evaluation_periods'] = '5'
+    default_alarm['dimentions'] = [
+      { Name: 'ServiceName', Value: FnGetAtt(:Service,:Name)},
+      { Name: 'ClusterName', Value: Ref('EcsCluster')}
+    ]
+
+    CloudWatch_Alarm(:ServiceScaleUpAlarm) {
+      AlarmDescription FnJoin(' ', [Ref('EnvironmentName'), "#{component_name} ecs scale down alarm"])
+      MetricName scaling_policy['up']['metric_name'] || default_alarm['metric_name']
+      Namespace scaling_policy['up']['namespace'] || default_alarm['namespace']
+      Statistic scaling_policy['up']['statistic'] || default_alarm['statistic']
+      Period (scaling_policy['up']['period'] || default_alarm['period']).to_s
+      EvaluationPeriods scaling_policy['up']['evaluation_periods'].to_s
+      Threshold scaling_policy['up']['threshold'].to_s
+      AlarmActions [Ref(:ServiceScalingUpPolicy)]
+      ComparisonOperator 'GreaterThanThreshold'
+      Dimensions scaling_policy['up']['dimentions'] || default_alarm['dimentions']
+    }
+
+    CloudWatch_Alarm(:ServiceScaleDownAlarm) {
+      AlarmDescription FnJoin(' ', [Ref('EnvironmentName'), "#{component_name} ecs scale down alarm"])
+      MetricName scaling_policy['down']['metric_name'] || default_alarm['metric_name']
+      Namespace scaling_policy['down']['namespace'] || default_alarm['namespace']
+      Statistic scaling_policy['down']['statistic'] || default_alarm['statistic']
+      Period (scaling_policy['down']['period'] || default_alarm['period']).to_s
+      EvaluationPeriods scaling_policy['down']['evaluation_periods'].to_s
+      Threshold scaling_policy['down']['threshold'].to_s
+      AlarmActions [Ref(:ServiceScalingDownPolicy)]
+      ComparisonOperator 'LessThanThreshold'
+      Dimensions scaling_policy['down']['dimentions'] || default_alarm['dimentions']
+    }
+
+  end
 
 end
