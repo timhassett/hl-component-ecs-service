@@ -9,7 +9,7 @@ CloudFormation do
     az_conditions_resources('SubnetCompute', maximum_availability_zones)
   end
 
-  Condition('IsProduction', FnEquals(Ref('EnvironmentType'), 'production'))
+  Condition('IsScalingEnabled', FnEquals(Ref('EnableScaling'), 'true'))
 
   log_retention = 7 unless defined?(log_retention)
   Resource('LogGroup') {
@@ -318,10 +318,10 @@ CloudFormation do
   ECS_Service('Service') do
     Cluster Ref("EcsCluster")
     Property("HealthCheckGracePeriodSeconds", health_check_grace_period || 0)
-    DesiredCount FnIf('IsProduction', desired_count, 1)
+    DesiredCount Ref('DesiredCount')
     DeploymentConfiguration ({
-        MinimumHealthyPercent: 100,
-        MaximumPercent: 200
+        MinimumHealthyPercent: Ref('MinimumHealthyPercent'),
+        MaximumPercent: Ref('MaximumPercent')
     })
     TaskDefinition Ref('Task')
 
@@ -344,6 +344,7 @@ CloudFormation do
   if defined?(scaling_policy)
 
     IAM_Role(:ServiceECSAutoScaleRole) {
+      Condition 'IsScalingEnabled'
       AssumeRolePolicyDocument service_role_assume_policy('application-autoscaling')
       Path '/'
       Policies ([
@@ -365,6 +366,7 @@ CloudFormation do
     }
 
     ApplicationAutoScaling_ScalableTarget(:ServiceScalingTarget) {
+      Condition 'IsScalingEnabled'
       MaxCapacity scaling_policy['max']
       MinCapacity scaling_policy['min']
       ResourceId FnJoin( '', [ "service/", Ref('EcsCluster'), "/", FnGetAtt(:Service,:Name) ] )
@@ -386,6 +388,7 @@ CloudFormation do
     }
 
     ApplicationAutoScaling_ScalingPolicy(:ServiceScalingDownPolicy) {
+      Condition 'IsScalingEnabled'
       PolicyName FnJoin('-', [ Ref('EnvironmentName'), component_name, "scale-down-policy" ])
       PolicyType 'StepScaling'
       ScalingTargetId Ref(:ServiceScalingTarget)
@@ -409,6 +412,7 @@ CloudFormation do
     ]
 
     CloudWatch_Alarm(:ServiceScaleUpAlarm) {
+      Condition 'IsScalingEnabled'
       AlarmDescription FnJoin(' ', [Ref('EnvironmentName'), "#{component_name} ecs scale down alarm"])
       MetricName scaling_policy['up']['metric_name'] || default_alarm['metric_name']
       Namespace scaling_policy['up']['namespace'] || default_alarm['namespace']
@@ -422,6 +426,7 @@ CloudFormation do
     }
 
     CloudWatch_Alarm(:ServiceScaleDownAlarm) {
+      Condition 'IsScalingEnabled'
       AlarmDescription FnJoin(' ', [Ref('EnvironmentName'), "#{component_name} ecs scale down alarm"])
       MetricName scaling_policy['down']['metric_name'] || default_alarm['metric_name']
       Namespace scaling_policy['down']['namespace'] || default_alarm['namespace']
