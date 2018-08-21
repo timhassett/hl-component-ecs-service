@@ -20,6 +20,12 @@ CfhighlanderTemplate do
       ComponentParam 'DnsDomain'
     end
 
+    ComponentParam 'DesiredCount', 1
+    ComponentParam 'MinimumHealthyPercent', 100
+    ComponentParam 'MaximumPercent', 200
+
+    ComponentParam 'EnableScaling', 'false', allowedValues: ['true','false']
+
     if ((defined? network_mode) && (network_mode == "awsvpc"))
       maximum_availability_zones.times do |az|
         ComponentParam "SubnetCompute#{az}"
