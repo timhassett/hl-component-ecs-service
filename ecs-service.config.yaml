@@ -29,6 +29,8 @@ log_retention: 7
 #       - 8080
 #     env_vars:
 #       KEY: value
+#     entrypoint: ['/docker-entrypoint.sh']
+#     command: ['npm','start']
 #     mounts:
 #       - data-volume:/data:ro
 
