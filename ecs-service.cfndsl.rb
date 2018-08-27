@@ -130,7 +130,13 @@ CloudFormation do
     end
   end
 
-  if defined?(iam)
+  if defined?(iam_policies)
+
+    policies = []
+    iam_policies.each do |name,policy|
+      policies << iam_policy_allow(name,policy['action'],policy['resource'] || '*')
+    end
+
     IAM_Role('TaskRole') do
       AssumeRolePolicyDocument ({
         Statement: [
@@ -147,39 +153,13 @@ CloudFormation do
         ]
       })
       Path '/'
-      Policies(IAMPolicies.new.create_policies(iam))
+      Policies(policies)
     end
 
     IAM_Role('ExecutionRole') do
-      AssumeRolePolicyDocument ({
-        Statement: [
-          {
-            Effect: 'Allow',
-            Principal: { Service: [ 'ecs-tasks.amazonaws.com' ] },
-            Action: [ 'sts:AssumeRole' ]
-          }
-        ]
-      })
+      AssumeRolePolicyDocument service_role_assume_policy('ecs-tasks')
       Path '/'
-      Policies([
-        {
-          Version: "2012-10-17",
-          Statement: [
-            {
-              Effect: "Allow",
-              Action: [
-                "ecr:GetAuthorizationToken",
-                "ecr:BatchCheckLayerAvailability",
-                "ecr:GetDownloadUrlForLayer",
-                "ecr:BatchGetImage",
-                "logs:CreateLogStream",
-                "logs:PutLogEvents"
-              ],
-              Resource: "*"
-            }
-          ]
-        }
-      ])
+      ManagedPolicyArns ["arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"]
     end
   end
 
@@ -203,7 +183,7 @@ CloudFormation do
       Property('Volumes', task_volumes)
     end
 
-    if defined?(iam)
+    if defined?(iam_policies)
       Property('TaskRoleArn', Ref('TaskRole'))
       Property('ExecutionRoleArn', Ref('ExecutionRole'))
     end
