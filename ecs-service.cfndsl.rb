@@ -136,7 +136,7 @@ CloudFormation do
         Statement: [
           {
             Effect: 'Allow',
-            Principal: { Service: [ 'ec2.amazonaws.com' ] },
+            Principal: { Service: [ 'ecs-tasks.amazonaws.com' ] },
             Action: [ 'sts:AssumeRole' ]
           },
           {
@@ -161,23 +161,25 @@ CloudFormation do
         ]
       })
       Path '/'
-      Policies({
-        Version: "2012-10-17",
-        Statement: [
-          {
-            Effect: "Allow",
-            Action: [
-              "ecr:GetAuthorizationToken",
-              "ecr:BatchCheckLayerAvailability",
-              "ecr:GetDownloadUrlForLayer",
-              "ecr:BatchGetImage",
-              "logs:CreateLogStream",
-              "logs:PutLogEvents"
-            ],
-            Resource: "*"
-          }
-        ]
-      })
+      Policies([
+        {
+          Version: "2012-10-17",
+          Statement: [
+            {
+              Effect: "Allow",
+              Action: [
+                "ecr:GetAuthorizationToken",
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:BatchGetImage",
+                "logs:CreateLogStream",
+                "logs:PutLogEvents"
+              ],
+              Resource: "*"
+            }
+          ]
+        }
+      ])
     end
   end
 
