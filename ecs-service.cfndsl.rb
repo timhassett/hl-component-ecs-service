@@ -320,7 +320,7 @@ CloudFormation do
 
   ECS_Service('Service') do
     Cluster Ref("EcsCluster")
-    Property("HealthCheckGracePeriodSeconds", health_check_grace_period || 0)
+    Property("HealthCheckGracePeriodSeconds", health_check_grace_period) if defined? health_check_grace_period
     DesiredCount Ref('DesiredCount')
     DeploymentConfiguration ({
         MinimumHealthyPercent: Ref('MinimumHealthyPercent'),
