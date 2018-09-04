@@ -4,7 +4,7 @@ maximum_availability_zones: 5
 log_retention: 7
 
 # network_mode: awsvpc
-
+#
 # health_check_grace_period: 60
 #
 # cpu: 256
@@ -33,7 +33,7 @@ log_retention: 7
 #     command: ['npm','start']
 #     mounts:
 #       - data-volume:/data:ro
-
+#
 # targetgroup:
 #   name: api
 #   container: api
@@ -52,7 +52,7 @@ log_retention: 7
 #       priority: 20
 #   tags:
 #       Name: api
-
+#
 # scaling_policy:
 #   min: 2
 #   max: 4
@@ -66,3 +66,11 @@ log_retention: 7
 #     threshold: 70
 #     evaluation_periods: 5
 #     adjustment: -1
+#
+# iam_policies:
+#   ssm:
+#     action:
+#       - ssm:GetParameter
+#       - ssm:GetParameters
+#       - ssm:GetParametersByPath
+#       - ssm:DescribeParameters
