@@ -48,6 +48,9 @@ CloudFormation do
     task_def.merge!({ MemoryReservation: task['memory'] }) if task.has_key?('memory')
     task_def.merge!({ Cpu: task['cpu'] }) if task.has_key?('cpu')
 
+    task_def.merge!({ Ulimits: task['ulimits'] }) if task.has_key?('ulimits')
+
+
     if !(task['env_vars'].nil?)
       task['env_vars'].each do |name,value|
         split_value = value.to_s.split(/\${|}/)
