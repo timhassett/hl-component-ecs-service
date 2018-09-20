@@ -21,6 +21,10 @@ log_retention: 7
 #     not_essential: true
 #     env_vars:
 #       KEY: value
+#     ulimits:
+#     - HardLimit: 65000
+#       Name: nofile
+#       SoftLimit: 65000
 #   api:
 #     repo: some.custom.repo
 #     image: api
