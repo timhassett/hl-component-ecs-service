@@ -245,7 +245,7 @@ CloudFormation do
           puts "DEBUG:001"
           puts rule['host']
 
-          if rule["host"].include?('.') 
+          if rule["host"].include?('.') || rule["host"].key?("Fn::Join")
             hosts << rule["host"]
           else
             hosts << FnJoin("", [ rule["host"], ".", Ref("EnvironmentName"), ".", Ref('DnsDomain') ])
