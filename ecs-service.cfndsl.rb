@@ -242,6 +242,9 @@ CloudFormation do
         end
         if rule.key?("host")
           hosts = []
+          puts "DEBUG:001"
+          puts rule['host']
+          
           if rule["host"].include?('.') || rule['host'].instance_of? Fn::Join
             hosts << rule["host"]
           else
