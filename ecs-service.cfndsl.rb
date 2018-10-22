@@ -242,7 +242,7 @@ CloudFormation do
         end
         if rule.key?("host")
           hosts = []
-          if !rule["host"].is_a('String') || rule["host"].include?('.')
+          if rule["host"].include?('.') || rule['host'].instance_of? FnJoin
             hosts << rule["host"]
           else
             hosts << FnJoin("", [ rule["host"], ".", Ref("EnvironmentName"), ".", Ref('DnsDomain') ])
