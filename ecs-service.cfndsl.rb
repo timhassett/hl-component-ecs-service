@@ -242,7 +242,7 @@ CloudFormation do
         end
         if rule.key?("host")
           hosts = []
-          if rule["host"].include?('.')
+          if rule["host"].include?('.') || rule["host"].key?("Fn::Join")
             hosts << rule["host"]
           else
             hosts << FnJoin("", [ rule["host"], ".", Ref("EnvironmentName"), ".", Ref('DnsDomain') ])
@@ -380,9 +380,9 @@ CloudFormation do
       ScalingTargetId Ref(:ServiceScalingTarget)
       StepScalingPolicyConfiguration({
         AdjustmentType: "ChangeInCapacity",
-        Cooldown: scaling_policy['up']['cooldown'] || 900,
+        Cooldown: scaling_policy['down']['cooldown'] || 900,
         MetricAggregationType: "Average",
-        StepAdjustments: [{ ScalingAdjustment: scaling_policy['down']['adjustment'].to_s, MetricIntervalLowerBound: 0 }]
+        StepAdjustments: [{ ScalingAdjustment: scaling_policy['down']['adjustment'].to_s, MetricIntervalUpperBound: 0 }]
       })
     }
 
@@ -399,7 +399,7 @@ CloudFormation do
 
     CloudWatch_Alarm(:ServiceScaleUpAlarm) {
       Condition 'IsScalingEnabled'
-      AlarmDescription FnJoin(' ', [Ref('EnvironmentName'), "#{component_name} ecs scale down alarm"])
+      AlarmDescription FnJoin(' ', [Ref('EnvironmentName'), "#{component_name} ecs scale up alarm"])
       MetricName scaling_policy['up']['metric_name'] || default_alarm['metric_name']
       Namespace scaling_policy['up']['namespace'] || default_alarm['namespace']
       Statistic scaling_policy['up']['statistic'] || default_alarm['statistic']
