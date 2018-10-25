@@ -230,7 +230,7 @@ CloudFormation do
         end
 
         TargetType targetgroup['type'] if targetgroup.has_key?('type')
-        TargetGroupAttributes atributes if atributes.any?
+        TargetGroupAttributes attributes if attributes.any?
 
         Tags tags if tags.any?
       end
