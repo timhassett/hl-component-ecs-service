@@ -362,6 +362,7 @@ CloudFormation do
     }
 
     ApplicationAutoScaling_ScalingPolicy(:ServiceScalingUpPolicy) {
+      Condition 'IsScalingEnabled'
       PolicyName FnJoin('-', [ Ref('EnvironmentName'), component_name, "scale-up-policy" ])
       PolicyType "StepScaling"
       ScalingTargetId Ref(:ServiceScalingTarget)
