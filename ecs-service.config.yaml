@@ -17,6 +17,7 @@ log_retention: 7
 #   data:
 #     repo: some.custom.repo
 #     image: data
+#     memory: 128
 #     tag_param: DataTag
 #     not_essential: true
 #     env_vars:
@@ -28,6 +29,7 @@ log_retention: 7
 #   api:
 #     repo: some.custom.repo
 #     image: api
+#     memory_hard: 128
 #     tag_param: ApiTag
 #     ports:
 #       - 8080
