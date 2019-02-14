@@ -255,7 +255,7 @@ CloudFormation do
           Actions [{ Type: "forward", TargetGroupArn: Ref('TaskTargetGroup') }]
           Conditions listener_conditions
           ListenerArn Ref("Listener")
-          Priority rule['priority'].to_i
+          Priority rule['priority']
         end
 
       end
