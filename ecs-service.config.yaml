@@ -50,7 +50,8 @@ log_retention: 7
 #     path: /status
 #     code: 200
 #   rules:
-#     - path: /v2/*
+#     - name:  apiv2
+#       path: /v2/*
 #       host: api.*
 #       priority: 10
 #     - path: /api/v1/*
