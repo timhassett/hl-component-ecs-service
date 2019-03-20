@@ -1,0 +1,31 @@
+test_metadata:
+  type: config
+  name: ecs service with volumes that include a Ref
+  description: Creates an ecs service with volumes
+
+volumes:
+  - /data
+  - test:/test
+  - ${EnvironmentName}:/etc/${EnvironmentName}
+  - Name: 
+      Fn::Sub: ${EnvironmentName}.mybucket
+    DockerVolumeConfiguration:
+      Driver: rexray/s3fs
+      Scope: shared
+
+
+task_definition:
+  sftp:
+    image: nginx
+    tag: latest
+    privileged: true
+    mounts: 
+      - /etc/${EnvironmentName}:${EnvironmentName}
+      - /data:${EnvironmentName}.mybucket
+      - /data:${EnvironmentName}.mybucket-${AWS::Region}
+      - ContainerPath: /data
+        SourceVolume: 
+          Fn::Sub: bucket-${EnvironmentName}-${AWS::Region}
+        ReadOnly: false
+    ports:
+      - 80

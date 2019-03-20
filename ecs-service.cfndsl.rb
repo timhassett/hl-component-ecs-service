@@ -89,8 +89,12 @@ CloudFormation do
     # add docker volumes
     if task.key?('mounts')
       task['mounts'].each do |mount|
-        parts = mount.split(':')
-        mount_points << { ContainerPath: parts[0], SourceVolume: parts[1], ReadOnly: (parts[2] == 'ro' ? true : false) }
+        if mount.is_a? String 
+          parts = mount.split(':',2)
+          mount_points << { ContainerPath: FnSub(parts[0]), SourceVolume: FnSub(parts[1]), ReadOnly: (parts[2] == 'ro' ? true : false) }
+        else
+          mount_points << mount
+        end
       end
       task_def.merge!({MountPoints: mount_points })
     end
@@ -119,6 +123,7 @@ CloudFormation do
     task_def.merge!({Command: task['command'] }) if task.key?('command')
     task_def.merge!({HealthCheck: task['healthcheck'] }) if task.key?('healthcheck')
     task_def.merge!({WorkingDirectory: task['working_dir'] }) if task.key?('working_dir')
+    task_def.merge!({Privileged: task['privileged'] }) if task.key?('privileged')
 
     definitions << task_def
 
@@ -127,9 +132,13 @@ CloudFormation do
   # add docker volumes
   if defined?(volumes)
     volumes.each do |volume|
-      parts = volume.split(':')
-      object = { Name: parts[0]}
-      object.merge!({ Host: { SourcePath: parts[1] }}) if parts[1]
+      if volume.is_a? String 
+        parts = volume.split(':')
+        object = { Name: FnSub(parts[0])}
+        object.merge!({ Host: { SourcePath: FnSub(parts[1]) }}) if parts[1]
+      else
+        object = volume
+      end
       task_volumes << object
     end
   end
