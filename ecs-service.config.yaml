@@ -6,6 +6,7 @@ log_retention: 7
 # network_mode: awsvpc
 #
 # health_check_grace_period: 60
+# scheduling_strategy: DAEMON
 #
 # cpu: 256
 # memory: 256
