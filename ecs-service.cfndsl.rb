@@ -89,7 +89,7 @@ CloudFormation do
     # add docker volumes
     if task.key?('mounts')
       task['mounts'].each do |mount|
-        if mount.is_a? String 
+        if mount.is_a? String
           parts = mount.split(':',2)
           mount_points << { ContainerPath: FnSub(parts[0]), SourceVolume: FnSub(parts[1]), ReadOnly: (parts[2] == 'ro' ? true : false) }
         else
@@ -132,7 +132,7 @@ CloudFormation do
   # add docker volumes
   if defined?(volumes)
     volumes.each do |volume|
-      if volume.is_a? String 
+      if volume.is_a? String
         parts = volume.split(':')
         object = { Name: FnSub(parts[0])}
         object.merge!({ Host: { SourcePath: FnSub(parts[1]) }}) if parts[1]
@@ -328,6 +328,7 @@ CloudFormation do
         MaximumPercent: Ref('MaximumPercent')
     })
     TaskDefinition Ref('Task')
+    SchedulingStrategy scheduling_strategy if defined? scheduling_strategy
 
     if service_loadbalancer.any?
       Role Ref('Role')
