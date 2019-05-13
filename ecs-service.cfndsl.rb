@@ -5,10 +5,6 @@ CloudFormation do
     awsvpc_enabled = true
   end
 
-  if awsvpc_enabled
-    az_conditions_resources('SubnetCompute', maximum_availability_zones)
-  end
-
   Condition('IsScalingEnabled', FnEquals(Ref('EnableScaling'), 'true'))
 
   log_retention = 7 unless defined?(log_retention)
@@ -285,7 +281,7 @@ CloudFormation do
       EC2_SecurityGroup('ServiceSecurityGroup') do
         VpcId Ref('VPCId')
         GroupDescription "#{component_name} ECS service"
-        SecurityGroupIngress sg_create_rules(securityGroups[component_name], ip_blocks)
+        SecurityGroupIngress Ref('SubnetIds')
       end
       sg_name = 'ServiceSecurityGroup'
     end
