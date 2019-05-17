@@ -364,16 +364,18 @@ CloudFormation do
     desired_count = desired
   end
 
+  strategy = defined?(scheduling_strategy) ? scheduling_strategy : nil
+
   ECS_Service('Service') do
     Cluster Ref("EcsCluster")
     Property("HealthCheckGracePeriodSeconds", health_check_grace_period) if defined? health_check_grace_period
-    DesiredCount Ref('DesiredCount')
+    DesiredCount Ref('DesiredCount') if strategy != 'DAEMON'
     DeploymentConfiguration ({
         MinimumHealthyPercent: Ref('MinimumHealthyPercent'),
         MaximumPercent: Ref('MaximumPercent')
     })
     TaskDefinition Ref('Task')
-    SchedulingStrategy scheduling_strategy if defined? scheduling_strategy
+    SchedulingStrategy scheduling_strategy if !strategy.nil?
 
     if service_loadbalancer.any?
       Role Ref('Role') unless awsvpc_enabled
