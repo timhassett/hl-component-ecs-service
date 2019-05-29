@@ -1,5 +1,7 @@
 CfhighlanderTemplate do
 
+  DependsOn 'vpc' if ((defined? network_mode) && (network_mode == "awsvpc"))
+
   Description "ecs-service - #{component_name} - #{component_version}"
 
   Parameters do

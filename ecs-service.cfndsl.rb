@@ -281,7 +281,7 @@ CloudFormation do
       EC2_SecurityGroup('ServiceSecurityGroup') do
         VpcId Ref('VPCId')
         GroupDescription "#{component_name} ECS service"
-        SecurityGroupIngress Ref('SubnetIds')
+        SecurityGroupIngress sg_create_rules(securityGroups[component_name], ip_blocks)
       end
       sg_name = 'ServiceSecurityGroup'
     end
@@ -314,7 +314,7 @@ CloudFormation do
         AwsvpcConfiguration: {
           AssignPublicIp: "DISABLED",
           SecurityGroups: [ Ref(sg_name) ],
-          Subnets: az_conditional_resources('SubnetCompute', maximum_availability_zones)
+          Subnets: Ref('SubnetIds')
         }
       })
     end
