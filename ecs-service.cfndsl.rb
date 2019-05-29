@@ -5,10 +5,6 @@ CloudFormation do
     awsvpc_enabled = true
   end
 
-  if awsvpc_enabled
-    az_conditions_resources('SubnetCompute', maximum_availability_zones)
-  end
-
   Condition('IsScalingEnabled', FnEquals(Ref('EnableScaling'), 'true'))
 
   log_retention = 7 unless defined?(log_retention)
@@ -340,7 +336,7 @@ CloudFormation do
         AwsvpcConfiguration: {
           AssignPublicIp: "DISABLED",
           SecurityGroups: [ Ref(sg_name) ],
-          Subnets: az_conditional_resources('SubnetCompute', maximum_availability_zones)
+          Subnets: Ref('SubnetIds')
         }
       })
     end

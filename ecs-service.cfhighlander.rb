@@ -1,6 +1,6 @@
 CfhighlanderTemplate do
 
-  DependsOn 'vpc@1.2.0' if ((defined? network_mode) && (network_mode == "awsvpc"))
+  DependsOn 'vpc' if ((defined? network_mode) && (network_mode == "awsvpc"))
 
   Description "ecs-service - #{component_name} - #{component_version}"
 
@@ -27,9 +27,7 @@ CfhighlanderTemplate do
     ComponentParam 'EnableScaling', 'false', allowedValues: ['true','false']
 
     if ((defined? network_mode) && (network_mode == "awsvpc"))
-      maximum_availability_zones.times do |az|
-        ComponentParam "SubnetCompute#{az}"
-      end
+      ComponentParam 'SubnetIds', type: 'CommaDelimitedList'
       ComponentParam 'SecurityGroupBackplane'
     end
 
