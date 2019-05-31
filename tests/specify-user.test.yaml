@@ -1,0 +1,10 @@
+test_metadata:
+  type: config
+  name: user
+  description: specify a user as part of a task config
+
+task_definition:
+  mytask:
+    repo: somethingcustom
+    image: apache
+    user: www-root
