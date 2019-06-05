@@ -38,6 +38,8 @@ CfhighlanderTemplate do
       end
     end if defined? task_definition
 
+    ComponentParam 'NamespaceId' if defined? service_discovery
+
   end
 
 end

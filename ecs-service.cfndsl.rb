@@ -309,6 +309,30 @@ CloudFormation do
     end
   end
 
+  registry = {}
+
+  if defined? service_discovery
+
+    ServiceDiscovery_Service(:ServiceRegistry) {
+      NamespaceId Ref(:NamespaceId)
+      Name service_discovery['name']  if service_discovery.has_key? 'name'
+      DnsConfig({
+        DnsRecords: [{
+          TTL: 60,
+          Type: 'A'
+        }],
+        RoutingPolicy: 'WEIGHTED'
+      })
+      HealthCheckConfig service_discovery['healthcheck'] if service_discovery.has_key? 'healthcheck'
+    }
+
+    registry[:RegistryArn] = FnGetAtt(:ServiceRegistry, :Arn)
+    registry[:ContainerName] = service_discovery['container_name']
+    registry[:ContainerPort] = service_discovery['container_port'] if service_discovery.has_key? 'container_port'
+    registry[:Port] = service_discovery['port'] if service_discovery.has_key? 'port'
+  end
+
+
   desired_count = 1
   if (defined? scaling_policy) && (scaling_policy.has_key?('min'))
     desired_count = scaling_policy['min']
@@ -341,6 +365,11 @@ CloudFormation do
         }
       })
     end
+
+    unless registry.empty?
+      ServiceRegistries([registry])
+    end
+
   end if defined? task_definition
 
   if defined?(scaling_policy)
