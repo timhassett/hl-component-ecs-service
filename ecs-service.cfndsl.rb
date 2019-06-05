@@ -120,6 +120,7 @@ CloudFormation do
     task_def.merge!({HealthCheck: task['healthcheck'] }) if task.key?('healthcheck')
     task_def.merge!({WorkingDirectory: task['working_dir'] }) if task.key?('working_dir')
     task_def.merge!({Privileged: task['privileged'] }) if task.key?('privileged')
+    task_def.merge!({User: task['user'] }) if task.key?('user')
 
     definitions << task_def
 
