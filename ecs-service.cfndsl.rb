@@ -328,7 +328,7 @@ CloudFormation do
     SchedulingStrategy scheduling_strategy if defined? scheduling_strategy
 
     if service_loadbalancer.any?
-      Role Ref('Role')
+      Role Ref('Role') unless awsvpc_enabled
       LoadBalancers service_loadbalancer
     end
 
