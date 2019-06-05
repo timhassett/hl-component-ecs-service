@@ -341,7 +341,11 @@ CloudFormation do
         }],
         RoutingPolicy: 'WEIGHTED'
       })
-      HealthCheckConfig service_discovery['healthcheck'] if service_discovery.has_key? 'healthcheck'
+      if service_discovery.has_key? 'healthcheck'
+        HealthCheckConfig service_discovery['healthcheck']
+      else
+        HealthCheckCustomConfig ({ FailureThreshold: (service_discovery['failure_threshold'] || 1) })
+      end
     }
 
     registry[:RegistryArn] = FnGetAtt(:ServiceRegistry, :Arn)
