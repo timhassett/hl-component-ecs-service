@@ -147,6 +147,24 @@ CloudFormation do
       policies << iam_policy_allow(name,policy['action'],policy['resource'] || '*')
     end
 
+    if defined? service_discovery
+      actions = %w(
+        servicediscovery:RegisterInstance
+        servicediscovery:DeregisterInstance
+        servicediscovery:DiscoverInstances
+        servicediscovery:Get*
+        servicediscovery:List*
+        route53:GetHostedZone
+        route53:ListHostedZonesByName
+        route53:ChangeResourceRecordSets
+        route53:CreateHealthCheck
+        route53:GetHealthCheck
+        route53:DeleteHealthCheck
+        route53:UpdateHealthCheck
+      )
+      policies << iam_policy_allow(name,actions,'*')
+    end
+
     IAM_Role('TaskRole') do
       AssumeRolePolicyDocument ({
         Statement: [
