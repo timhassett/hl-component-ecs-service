@@ -286,10 +286,12 @@ CloudFormation do
     }
   end
 
-  IAM_Role('Role') do
-    AssumeRolePolicyDocument service_role_assume_policy('ecs')
-    Path '/'
-    ManagedPolicyArns ["arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceRole"]
+  unless awsvpc_enabled
+    IAM_Role('Role') do
+      AssumeRolePolicyDocument service_role_assume_policy('ecs')
+      Path '/'
+      ManagedPolicyArns ["arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceRole"]
+    end
   end
 
   has_security_group = false
@@ -328,7 +330,7 @@ CloudFormation do
     SchedulingStrategy scheduling_strategy if defined? scheduling_strategy
 
     if service_loadbalancer.any?
-      Role Ref('Role')
+      Role Ref('Role') unless awsvpc_enabled
       LoadBalancers service_loadbalancer
     end
 
