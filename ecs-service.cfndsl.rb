@@ -162,7 +162,7 @@ CloudFormation do
         route53:DeleteHealthCheck
         route53:UpdateHealthCheck
       )
-      policies << iam_policy_allow(name,actions,'*')
+      policies << iam_policy_allow('ecs-service-discovery',actions,'*')
     end
 
     IAM_Role('TaskRole') do
