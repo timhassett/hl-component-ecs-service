@@ -147,6 +147,24 @@ CloudFormation do
       policies << iam_policy_allow(name,policy['action'],policy['resource'] || '*')
     end
 
+    if defined? service_discovery
+      actions = %w(
+        servicediscovery:RegisterInstance
+        servicediscovery:DeregisterInstance
+        servicediscovery:DiscoverInstances
+        servicediscovery:Get*
+        servicediscovery:List*
+        route53:GetHostedZone
+        route53:ListHostedZonesByName
+        route53:ChangeResourceRecordSets
+        route53:CreateHealthCheck
+        route53:GetHealthCheck
+        route53:DeleteHealthCheck
+        route53:UpdateHealthCheck
+      )
+      policies << iam_policy_allow(name,actions,'*')
+    end
+
     IAM_Role('TaskRole') do
       AssumeRolePolicyDocument ({
         Statement: [
@@ -311,6 +329,34 @@ CloudFormation do
     end
   end
 
+  registry = {}
+
+  if defined? service_discovery
+
+    ServiceDiscovery_Service(:ServiceRegistry) {
+      NamespaceId Ref(:NamespaceId)
+      Name service_discovery['name']  if service_discovery.has_key? 'name'
+      DnsConfig({
+        DnsRecords: [{
+          TTL: 60,
+          Type: 'A'
+        }],
+        RoutingPolicy: 'WEIGHTED'
+      })
+      if service_discovery.has_key? 'healthcheck'
+        HealthCheckConfig service_discovery['healthcheck']
+      else
+        HealthCheckCustomConfig ({ FailureThreshold: (service_discovery['failure_threshold'] || 1) })
+      end
+    }
+
+    registry[:RegistryArn] = FnGetAtt(:ServiceRegistry, :Arn)
+    registry[:ContainerName] = service_discovery['container_name']
+    registry[:ContainerPort] = service_discovery['container_port'] if service_discovery.has_key? 'container_port'
+    registry[:Port] = service_discovery['port'] if service_discovery.has_key? 'port'
+  end
+
+
   desired_count = 1
   if (defined? scaling_policy) && (scaling_policy.has_key?('min'))
     desired_count = scaling_policy['min']
@@ -343,6 +389,11 @@ CloudFormation do
         }
       })
     end
+
+    unless registry.empty?
+      ServiceRegistries([registry])
+    end
+
   end if defined? task_definition
 
   if defined?(scaling_policy)
