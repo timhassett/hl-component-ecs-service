@@ -1,0 +1,14 @@
+test_metadata:
+  type: config
+  name: ecs service with daemon scheduling
+  description: Creates an ECS service with the daemon scheduling strategy
+
+scheduling_strategy: DAEMON
+
+task_definition:
+  sftp:
+    image: nginx
+    tag: latest
+    privileged: true
+    ports:
+      - 80

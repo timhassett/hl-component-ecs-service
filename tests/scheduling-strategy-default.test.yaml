@@ -1,0 +1,12 @@
+test_metadata:
+  type: config
+  name: ecs service with replica scheduling
+  description: Creates an ECS service with the default (replica) scheduling strategy
+
+task_definition:
+  sftp:
+    image: nginx
+    tag: latest
+    privileged: true
+    ports:
+      - 80
