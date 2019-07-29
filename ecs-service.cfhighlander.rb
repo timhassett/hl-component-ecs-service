@@ -29,6 +29,7 @@ CfhighlanderTemplate do
     if ((defined? network_mode) && (network_mode == "awsvpc"))
       ComponentParam 'SubnetIds', type: 'CommaDelimitedList'
       ComponentParam 'SecurityGroupBackplane'
+      ComponentParam 'EnableFargate', 'false'
     end
 
     task_definition.each do |task_def, task|

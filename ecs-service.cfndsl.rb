@@ -6,6 +6,7 @@ CloudFormation do
   end
 
   Condition('IsScalingEnabled', FnEquals(Ref('EnableScaling'), 'true'))
+  Condition('IsFargate', FnEquals(Ref('EnableFargate'), 'true'))
 
   log_retention = 7 unless defined?(log_retention)
   Resource('LogGroup') {
@@ -215,7 +216,7 @@ CloudFormation do
       Property('TaskRoleArn', Ref('TaskRole'))
       Property('ExecutionRoleArn', Ref('ExecutionRole'))
     end
-
+    Property('RequiresCompatibilities', FnIf('IsFargate', ['FARGATE'], ['EC2']))
   end if defined? task_definition
 
   service_loadbalancer = []
@@ -367,6 +368,7 @@ CloudFormation do
   strategy = defined?(scheduling_strategy) ? scheduling_strategy : nil
 
   ECS_Service('Service') do
+    LaunchType FnIf('IsFargate', 'FARGATE', 'EC2')
     Cluster Ref("EcsCluster")
     Property("HealthCheckGracePeriodSeconds", health_check_grace_period) if defined? health_check_grace_period
     DesiredCount Ref('DesiredCount') if strategy != 'DAEMON'
