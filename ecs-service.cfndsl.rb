@@ -3,10 +3,11 @@ CloudFormation do
   awsvpc_enabled = false
   if defined?(network_mode) && network_mode == 'awsvpc'
     awsvpc_enabled = true
+    Condition('IsFargate', FnEquals(Ref('EnableFargate'), 'true'))
   end
 
   Condition('IsScalingEnabled', FnEquals(Ref('EnableScaling'), 'true'))
-  Condition('IsFargate', FnEquals(Ref('EnableFargate'), 'true'))
+  
 
   log_retention = 7 unless defined?(log_retention)
   Resource('LogGroup') {
