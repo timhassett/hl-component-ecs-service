@@ -217,7 +217,9 @@ CloudFormation do
       Property('TaskRoleArn', Ref('TaskRole'))
       Property('ExecutionRoleArn', Ref('ExecutionRole'))
     end
-    Property('RequiresCompatibilities', FnIf('IsFargate', ['FARGATE'], ['EC2']))
+    if awsvpc_enabled
+        Property('RequiresCompatibilities', FnIf('IsFargate', ['FARGATE'], ['EC2']))
+    end
   end if defined? task_definition
 
   service_loadbalancer = []
@@ -367,7 +369,9 @@ CloudFormation do
   end
 
   ECS_Service('Service') do
-    LaunchType FnIf('IsFargate', 'FARGATE', 'EC2')
+    if awsvpc_enabled
+        LaunchType FnIf('IsFargate', 'FARGATE', 'EC2')
+    end
     Cluster Ref("EcsCluster")
     Property("HealthCheckGracePeriodSeconds", health_check_grace_period) if defined? health_check_grace_period
     DesiredCount Ref('DesiredCount')
