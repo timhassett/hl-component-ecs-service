@@ -20,7 +20,7 @@ CloudFormation do
 
   task_definition.each do |task_name, task|
 
-    env_vars, mount_points, ports = Array.new(3){[]}
+    env_vars, mount_points, ports, volumes_from, port_mappings = Array.new(5){[]}
 
     name = task.has_key?('name') ? task['name'] : task_name
 
@@ -69,15 +69,15 @@ CloudFormation do
 
     # add links
     if task.key?('links')
-      task['links'].each do |links|
-      task_def.merge!({ Links: [ links ] })
+      if task['links'].kind_of?(Array)
+        task_def.merge!({ Links: task['links'] })
       end
     end
 
     # add entrypoint
     if task.key?('entrypoint')
-      task['entrypoint'].each do |entrypoint|
-      task_def.merge!({ EntryPoint: entrypoint })
+      if task['entrypoint'].kind_of?(Array)
+        task_def.merge!({ EntryPoint: task['entrypoint'] })
       end
     end
 
@@ -97,24 +97,26 @@ CloudFormation do
       task_def.merge!({MountPoints: mount_points })
     end
 
-    # volumes from
+    # add volumes from
     if task.key?('volumes_from')
-      task['volumes_from'].each do |source_container|
-      task_def.merge!({ VolumesFrom: [ SourceContainer: source_container ] })
+      if task['volumes_from'].kind_of?(Array)
+        task['volumes_from'].each do |source_container|
+          volumes_from << { SourceContainer: source_container }
+        end
+        task_def.merge!({ VolumesFrom: volumes_from })
       end
     end
 
     # add port
     if task.key?('ports')
-      port_mapppings = []
       task['ports'].each do |port|
         port_array = port.to_s.split(":").map(&:to_i)
         mapping = {}
         mapping.merge!(ContainerPort: port_array[0])
         mapping.merge!(HostPort: port_array[1]) if port_array.length == 2
-        port_mapppings << mapping
+        port_mappings << mapping
       end
-      task_def.merge!({PortMappings: port_mapppings})
+      task_def.merge!({PortMappings: port_mappings})
     end
 
     task_def.merge!({EntryPoint: task['entrypoint'] }) if task.key?('entrypoint')
